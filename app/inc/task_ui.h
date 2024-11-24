@@ -50,8 +50,8 @@ extern "C" {
 
 /********************** external functions declaration ***********************/
 
-void task_ui(void* argument);
-
+void init_ui_active_object(active_object_t *ui_obj, void (*callback)(event_data_t), uint8_t priority);
+void ui_process_event(event_data_t event);
 /********************** End of CPP guard *************************************/
 #ifdef __cplusplus
 }

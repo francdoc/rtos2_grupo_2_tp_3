@@ -43,6 +43,9 @@
 #include "board.h"
 #include "logger.h"
 #include "dwt.h"
+#include "task_ui.h"
+#include "task_button.h"
+#include "ao.h"
 
 /********************** macros and definitions *******************************/
 
@@ -61,18 +64,7 @@
 
 /********************** external data definition *****************************/
 
-extern SemaphoreHandle_t hsem_button;
-
 /********************** internal functions definition ************************/
-
-typedef enum
-{
-  BUTTON_TYPE_NONE,
-  BUTTON_TYPE_PULSE,
-  BUTTON_TYPE_SHORT,
-  BUTTON_TYPE_LONG,
-  BUTTON_TYPE__N,
-} button_type_t;
 
 static struct
 {
@@ -109,38 +101,21 @@ static button_type_t button_process_state_(bool value)
   }
   return ret;
 }
-
 /********************** external functions definition ************************/
 
 void task_button(void* argument)
 {
+  active_object_t *ui_ao = (active_object_t*)argument;
   button_init_();
-
+  button_event_t event;
   while(true)
   {
     GPIO_PinState button_state;
     button_state = HAL_GPIO_ReadPin(BUTTON_PORT, BUTTON_PIN);
 
-    button_type_t button_type;
-    button_type = button_process_state_(button_state);
-
-    switch (button_type) {
-      case BUTTON_TYPE_NONE:
-        break;
-      case BUTTON_TYPE_PULSE:
-        LOGGER_INFO("button pulse");
-        xSemaphoreGive(hsem_button);
-        break;
-      case BUTTON_TYPE_SHORT:
-        LOGGER_INFO("button short");
-        break;
-      case BUTTON_TYPE_LONG:
-        LOGGER_INFO("button long");
-        break;
-      default:
-        LOGGER_INFO("button error");
-        break;
-    }
+    event.type = button_process_state_(button_state);
+    if (event.type != BUTTON_TYPE_NONE)
+      active_object_send_event(ui_ao, &event);
 
     vTaskDelay((TickType_t)(TASK_PERIOD_MS_ / portTICK_PERIOD_MS));
   }

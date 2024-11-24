@@ -43,6 +43,7 @@
 #include "board.h"
 #include "logger.h"
 #include "dwt.h"
+#include "task_button.h"
 
 /********************** macros and definitions *******************************/
 
@@ -54,23 +55,36 @@
 
 /********************** external data definition *****************************/
 
-extern SemaphoreHandle_t hsem_button;
-extern SemaphoreHandle_t hsem_led;
-
 /********************** internal functions definition ************************/
 
 /********************** external functions definition ************************/
 
-void task_ui(void *argument)
-{
-  while (true)
-  {
-    if(pdTRUE == xSemaphoreTake(hsem_button, portMAX_DELAY))
-    {
-      LOGGER_INFO("ui led activate");
-      xSemaphoreGive(hsem_led);
-    }
-  }
+void init_ui_active_object(active_object_t *ui_obj,
+                            void (*callback)(event_data_t),
+                            uint8_t priority) {
+
+    ui_obj->event_size = (uint8_t)sizeof(button_event_t);
+    active_object_init(ui_obj, callback, 5,priority,"Task_ui");
 }
 
+void ui_process_event(event_data_t event) {
+    button_event_t *button_event = (button_event_t *) event;
+    
+    switch (button_event->type) {
+      case BUTTON_TYPE_PULSE:
+        LOGGER_INFO("Se precionó PULSE");
+        //active_object_send_event(button_event->red_led_obj, event);
+        break;
+      case BUTTON_TYPE_SHORT:
+      LOGGER_INFO("Se precionó SHORT");
+        //active_object_send_event(button_event->green_led_obj, event);
+        break;
+      case BUTTON_TYPE_LONG:
+      LOGGER_INFO("Se precionó LONG");
+        //active_object_send_event(button_event->blue_led_obj, event);
+        break;
+      default:
+        break;
+    }
+}
 /********************** end of file ******************************************/
