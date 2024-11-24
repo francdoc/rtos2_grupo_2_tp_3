@@ -4,15 +4,13 @@
  * 
  */
 #include "queue_p.h"
-#include "FreeRTOS.h"
-#include "cmsis_os.h"
 
 #define QUEUE_P_LENGTH 10
 
 
 
 // Function to create a new node
-node_t* new_node(int d, int p)
+static node_t* new_node(int d, int p)
 {
     node_t* temp = (node_t*)pvPortMalloc(sizeof(node_t));
     temp->data = d;
@@ -23,12 +21,14 @@ node_t* new_node(int d, int p)
 }
 
 // Return the value at head
-int peek(queue_p_t* queue) {
+int queue_peek(queue_p_t* queue)
+{
     node_t *node = (node_t*)queue->head;
     return node->data; 
 }
 
-void queue_create(queue_p_t **queue) {
+void queue_create(queue_p_t **queue)
+{
     if(queue) {
         *queue = pvPortMalloc(sizeof(queue_p_t));
         (*queue)->head = NULL;
@@ -40,18 +40,25 @@ void queue_create(queue_p_t **queue) {
     }
 }
 
-void queue_destroy(queue_p_t **queue) {
+void queue_destroy(queue_p_t **queue)
+{
     if(queue && *queue) {
-        node_t *next = (*queue)->head->next;
-        node_t *current = (*queue)->head;
-
-        while (!next)
+        // Protects shared resource (mutex)
+        xSemaphoreTake((*queue)->queue_mutex,portMAX_DELAY);
         {
-            vPortFree(current);
-            current = next;
-            next = current->next;
+            node_t *next = (*queue)->head->next;
+            node_t *current = (*queue)->head;
+
+            while (!next)
+            {
+                vPortFree(current);
+                current = next;
+                next = current->next;
+            }
         }
-        //TODO: mutex destroy
+        xSemaphoreGive((*queue)->queue_mutex);
+        // mutex destroy
+        vSemaphoreDelete((*queue)->queue_mutex);
         vPortFree(*queue);
         *queue = NULL;
     }
@@ -59,47 +66,75 @@ void queue_destroy(queue_p_t **queue) {
 
 // Removes the element with the
 // highest priority form the list
-void pop(queue_p_t* queue)
+bool_t queue_pop(queue_p_t* queue, int* data)
 {
-    node_t* temp = queue->head;
-    (queue->head) = (queue->head)->next;
-    vPortFree(temp);
+    if(!queue || !data) return false;
+    bool_t ret = false;
+
+    xSemaphoreTake(queue->queue_mutex,portMAX_DELAY);
+    {
+        if(!queue_is_empty(queue)) {
+            *data = queue->head->data;
+            node_t* temp = queue->head;
+            (queue->head) = (queue->head)->next;
+            queue->current_length--;
+            vPortFree(temp);
+            ret = true;
+        }
+    }
+    xSemaphoreGive(queue->queue_mutex);
+
+    return ret;
 }
 
 // Function to push according to priority
-void push(queue_p_t* queue, int d, int p)
+bool_t queue_push(queue_p_t* queue, int d, int p)
 {
-    node_t* start = (queue->head);
+    bool_t ret = false;
+    xSemaphoreTake(queue->queue_mutex,portMAX_DELAY);
+    {
+        if (queue->current_length < QUEUE_P_LENGTH)
+        {
+            node_t* start = (queue->head);
 
-    // Create new node_t
-    node_t* temp = new_node(d, p);
+            // Create new node_t
+            node_t* temp = new_node(d, p);
 
-    // Special Case: The head of list has
-    // lesser priority than new node
-    if ((queue->head)->priority < p) {
+            queue->current_length++;
 
-        // Insert New node_t before head
-        temp->next = queue->head;
-        (queue->head) = temp;
-    }
-    else {
+            // Special Case: The head of list has
+            // lesser priority than new node
+            if ((queue->head)->priority < p) {
 
-        // Traverse the list and find a
-        // position to insert new node
-        while (start->next != NULL
-               && start->next->priority > p) {
-            start = start->next;
+                // Insert New node_t before head
+                temp->next = queue->head;
+                (queue->head) = temp;
+            }
+            else {
+
+                // Traverse the list and find a
+                // position to insert new node
+                while (start->next != NULL
+                    && start->next->priority > p) {
+                    start = start->next;
+                }
+
+                // Either at the ends of the list
+                // or at required position
+                temp->next = start->next;
+                start->next = temp;
+            }
+            ret = true;
         }
-
-        // Either at the ends of the list
-        // or at required position
-        temp->next = start->next;
-        start->next = temp;
+        
     }
+    xSemaphoreGive(queue->queue_mutex);
+
+    return ret;
 }
 
 // Function to check is list is empty
-int is_empty(queue_p_t* queue) { return (queue->head) == NULL; }
+int queue_is_empty(queue_p_t* queue) { return (queue->head) == NULL; }
 
 // Driver code
 /*
