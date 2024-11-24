@@ -72,15 +72,15 @@ void ui_process_event(event_data_t event) {
     
     switch (button_event->type) {
       case BUTTON_TYPE_PULSE:
-        LOGGER_INFO("Se precionó PULSE");
+        LOGGER_INFO("Se presionó PULSE");
         //active_object_send_event(button_event->red_led_obj, event);
         break;
       case BUTTON_TYPE_SHORT:
-      LOGGER_INFO("Se precionó SHORT");
+      LOGGER_INFO("Se presionó SHORT");
         //active_object_send_event(button_event->green_led_obj, event);
         break;
       case BUTTON_TYPE_LONG:
-      LOGGER_INFO("Se precionó LONG");
+      LOGGER_INFO("Se presionó LONG");
         //active_object_send_event(button_event->blue_led_obj, event);
         break;
       default:
