@@ -43,7 +43,13 @@ void active_object_init(active_object_t *obj,
     obj->process_event = process_event;
 
     BaseType_t status;
-    status = xTaskCreate(opt_queue == PRIORITIZED_QUEUE ? active_object_task_queue_priorized : active_object_task, task_name, configMINIMAL_STACK_SIZE, obj, task_priority, NULL);
+    status = xTaskCreate(opt_queue == PRIORITIZED_QUEUE ? active_object_task_queue_priorized : active_object_task,
+                            task_name,
+                            configMINIMAL_STACK_SIZE,
+                            obj,
+                            task_priority,
+                            NULL);
+
     configASSERT(pdPASS == status);
 //    LOGGER_INFO("Se inicializa el objeto activo id: %d, Tamaño del evento: %d",obj->obj_id, obj->event_size);
 }
