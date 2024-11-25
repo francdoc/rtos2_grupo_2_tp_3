@@ -64,7 +64,7 @@ void init_ui_active_object(active_object_t *ui_obj,
                             uint8_t priority) {
 
     ui_obj->event_size = (uint8_t)sizeof(button_event_t);
-    active_object_init(ui_obj, callback, 5,priority,"Task_ui");
+    active_object_init(ui_obj, callback, 5,priority,"Task_ui",FREE_RTOS_QUEUE);
 }
 
 void ui_process_event(event_data_t event) {

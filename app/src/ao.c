@@ -6,6 +6,8 @@
 #include "ao.h"
 #include "task_button.h"
 #include "logger.h"
+#include "queue_p.h"
+
 // constantes definidas para facilitar el debugging del programa
 static char *QUEUE_ID_1 = "Queue_id_1";
 static char *QUEUE_ID_2 = "Queue_id_2";
@@ -29,11 +31,16 @@ void active_object_init(active_object_t *obj,
                         event_callback_t process_event,
                         size_t queue_size,
                         int task_priority,
-                        const char* task_name) {
+                        const char* task_name, queue_type_t opt_queue) {
 
-    obj->event_queue = xQueueCreate(queue_size, obj->event_size);
+    if (opt_queue == PRIORITIZED_QUEUE) {
+        queue_create(&obj->event_queue);
+
+    } else if ( opt_queue == FREE_RTOS_QUEUE) {
+        obj->event_queue = xQueueCreate(queue_size, obj->event_size);
+        vQueueAddToRegistry(obj->event_queue, get_queue_name(obj->obj_id));
+    }              
     configASSERT(NULL != obj->event_queue);
-    vQueueAddToRegistry(obj->event_queue, get_queue_name(obj->obj_id));
     obj->process_event = process_event;
 
     BaseType_t status;
@@ -44,10 +51,10 @@ void active_object_init(active_object_t *obj,
 
 void active_object_send_event(active_object_t *obj, event_data_t event) {
     xQueueSend(obj->event_queue, event, 0);
-//    LOGGER_INFO("Se envía un evento, objeto activo id: %d"
-//                ", Tamaño del evento: %d",
-//                obj->obj_id,
-//                obj->event_size);
+}
+
+bool_t active_object_send_priority_event(active_object_t *obj, int data, int priority) {
+   return queue_push(obj->event_queue, data, priority);
 }
 
 void active_object_task(void *pv_parameters) {
