@@ -43,6 +43,8 @@
 #include "board.h"
 #include "logger.h"
 #include "dwt.h"
+#include "task_button.h"
+#include "task_led.h"
 
 /********************** macros and definitions *******************************/
 
@@ -54,23 +56,43 @@
 
 /********************** external data definition *****************************/
 
-extern SemaphoreHandle_t hsem_button;
-extern SemaphoreHandle_t hsem_led;
-
 /********************** internal functions definition ************************/
 
 /********************** external functions definition ************************/
 
-void task_ui(void *argument)
-{
-  while (true)
-  {
-    if(pdTRUE == xSemaphoreTake(hsem_button, portMAX_DELAY))
-    {
-      LOGGER_INFO("ui led activate");
-      xSemaphoreGive(hsem_led);
-    }
-  }
+void init_ui_active_object(active_object_t *ui_obj,
+                            void (*callback)(event_data_t),
+                            uint8_t priority) {
+
+    ui_obj->event_size = (uint8_t)sizeof(button_event_t);
+    active_object_init(ui_obj, callback, 5,priority,"Task_ui",FREE_RTOS_QUEUE);
 }
 
+void ui_process_event(event_data_t event) {
+    button_event_t *button_event = (button_event_t *) event;
+    led_color_t data;
+    int priority;
+
+    switch (button_event->type) {
+      case BUTTON_TYPE_PULSE:
+        LOGGER_INFO("Se presionó PULSE");
+        priority = 3;
+        data = LED_COLOR_RED;
+        break;
+      case BUTTON_TYPE_SHORT:
+      LOGGER_INFO("Se presionó SHORT");
+        priority = 2;
+        data = LED_COLOR_GREEN;
+        break;
+      case BUTTON_TYPE_LONG:
+        LOGGER_INFO("Se presionó LONG");
+        priority = 1;
+        data = LED_COLOR_BLUE;
+        break;
+      default:
+        break;
+    }
+    if (button_event->type != BUTTON_TYPE_NONE)
+    	active_object_send_priority_event(button_event->led_obj, data, priority);
+}
 /********************** end of file ******************************************/
