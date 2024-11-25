@@ -106,6 +106,7 @@ void task_led(event_data_t event)
       break;
   }
   vTaskDelay((TickType_t)(TASK_PERIOD_MS_ / portTICK_PERIOD_MS));
+  led_set_colors(false, false, false);
 }
 
 /********************** end of file ******************************************/

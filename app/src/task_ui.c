@@ -44,6 +44,7 @@
 #include "logger.h"
 #include "dwt.h"
 #include "task_button.h"
+#include "task_led.h"
 
 /********************** macros and definitions *******************************/
 
@@ -69,22 +70,29 @@ void init_ui_active_object(active_object_t *ui_obj,
 
 void ui_process_event(event_data_t event) {
     button_event_t *button_event = (button_event_t *) event;
-    
+    led_color_t data;
+    int priority;
+
     switch (button_event->type) {
       case BUTTON_TYPE_PULSE:
         LOGGER_INFO("Se presionó PULSE");
-        //active_object_send_event(button_event->red_led_obj, event);
+        priority = 3;
+        data = LED_COLOR_RED;
         break;
       case BUTTON_TYPE_SHORT:
       LOGGER_INFO("Se presionó SHORT");
-        //active_object_send_event(button_event->green_led_obj, event);
+        priority = 2;
+        data = LED_COLOR_GREEN;
         break;
       case BUTTON_TYPE_LONG:
-      LOGGER_INFO("Se presionó LONG");
-        //active_object_send_event(button_event->blue_led_obj, event);
+        LOGGER_INFO("Se presionó LONG");
+        priority = 1;
+        data = LED_COLOR_BLUE;
         break;
       default:
         break;
     }
+    if (button_event->type != BUTTON_TYPE_NONE)
+    	active_object_send_priority_event(button_event->led_obj, data, priority);
 }
 /********************** end of file ******************************************/

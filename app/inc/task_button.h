@@ -57,13 +57,11 @@ typedef enum
 typedef struct {
   button_type_t type;
   active_object_t *led_obj;
-  // active_object_t *green_led_obj;
-  // active_object_t *blue_led_obj;
 } button_event_t;
 
 typedef struct all_obj {
   active_object_t *ui;
-  active_object_t *led
+  active_object_t *led;
 } all_obj_t;
 /********************** external data declaration ****************************/
 

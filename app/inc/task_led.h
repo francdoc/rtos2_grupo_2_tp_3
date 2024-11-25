@@ -41,7 +41,7 @@ extern "C" {
 #endif
 
 /********************** inclusions *******************************************/
-
+#include "ao.h"
 /********************** macros ***********************************************/
 
 /********************** typedef **********************************************/
@@ -58,7 +58,7 @@ typedef enum
 
 /********************** external functions declaration ***********************/
 
-void task_led(void* argument);
+void task_led(event_data_t event);
 void init_led_active_object(active_object_t *led_obj,
                             void (*callback)(event_data_t),
                             uint8_t priority);
