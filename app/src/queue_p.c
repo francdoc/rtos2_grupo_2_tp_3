@@ -101,10 +101,12 @@ bool_t queue_push(queue_p_t* queue, int d, int p)
             node_t* temp = new_node(d, p);
 
             queue->current_length++;
-
+            if (queue_is_empty(queue)) {
+                queue->head = temp;
+            }
             // Special Case: The head of list has
             // lesser priority than new node
-            if ((queue->head)->priority < p) {
+            else if ((queue->head)->priority < p) {
 
                 // Insert New node_t before head
                 temp->next = queue->head;
@@ -135,22 +137,3 @@ bool_t queue_push(queue_p_t* queue, int d, int p)
 
 // Function to check is list is empty
 int queue_is_empty(queue_p_t* queue) { return (queue->head) == NULL; }
-
-// Driver code
-/*
-int main()
-{
-
-    // Create a Priority Queue
-    // 7->4->5->6
-    node_t* pq = new_node(4, 1);
-    push(&pq, 5, 2);
-    push(&pq, 6, 3);
-    push(&pq, 7, 0);
-
-    while (!is_empty(&pq)) {
-        pop(&pq);
-    }
-    return 0;
-}
-*/
