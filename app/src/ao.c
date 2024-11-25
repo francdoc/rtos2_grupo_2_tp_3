@@ -6,7 +6,6 @@
 #include "ao.h"
 #include "task_button.h"
 #include "logger.h"
-#include "queue_p.h"
 
 // constantes definidas para facilitar el debugging del programa
 static char *QUEUE_ID_1 = "Queue_id_1";
@@ -34,7 +33,7 @@ void active_object_init(active_object_t *obj,
                         const char* task_name, queue_type_t opt_queue) {
 
     if (opt_queue == PRIORITIZED_QUEUE) {
-        queue_create(&obj->event_queue);
+        queue_create((queue_p_t**)&obj->event_queue);
 
     } else if ( opt_queue == FREE_RTOS_QUEUE) {
         obj->event_queue = xQueueCreate(queue_size, obj->event_size);
@@ -65,5 +64,14 @@ void active_object_task(void *pv_parameters) {
         xQueueReceive(obj->event_queue, event, portMAX_DELAY);
 
         if (obj->process_event != NULL) obj->process_event(event);
+    }
+}
+
+void active_object_task_queue_priorized(void *pv_parameters) {
+    active_object_t *obj = (active_object_t *) pv_parameters;
+    event_data_t event = (event_data_t)pvPortMalloc(obj->event_size);
+
+    for (;;) {
+        if (queue_pop(obj->event_queue, event) && obj->process_event != NULL) obj->process_event(event);
     }
 }

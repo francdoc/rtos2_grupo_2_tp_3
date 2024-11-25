@@ -43,10 +43,13 @@
 #include "board.h"
 #include "logger.h"
 #include "dwt.h"
+#include "task_led.h"
+#include "ao.h"
+#include "task_button.h"
 
 /********************** macros and definitions *******************************/
 
-#define TASK_PERIOD_MS_           (1000)
+#define TASK_PERIOD_MS_           (5000)
 
 /********************** internal data declaration ****************************/
 
@@ -54,21 +57,17 @@
 
 /********************** internal data definition *****************************/
 
-typedef enum
-{
-  LED_COLOR_NONE,
-  LED_COLOR_RED,
-  LED_COLOR_GREEN,
-  LED_COLOR_BLUE,
-  LED_COLOR_WHITE,
-  LED_COLOR__N,
-} led_color_t;
-
 /********************** external data definition *****************************/
 
-extern SemaphoreHandle_t hsem_led;
-
 /********************** internal functions definition ************************/
+void init_led_active_object(active_object_t *led_obj,
+                            void (*callback)(event_data_t),
+                            uint8_t priority) {
+
+    led_obj->event_size = sizeof(int);
+    active_object_init(led_obj, callback, 0, priority ,"Task LED", PRIORITIZED_QUEUE);
+}
+
 
 void led_set_colors(bool r, bool g, bool b)
 {
@@ -79,48 +78,34 @@ void led_set_colors(bool r, bool g, bool b)
 
 /********************** external functions definition ************************/
 
-void task_led(void *argument)
+void task_led(event_data_t event)
 {
-  while (true)
+  led_color_t color = *(led_color_t*)event;
+  switch (color)
   {
-    led_color_t color;
-
-    if(pdTRUE == xSemaphoreTake(hsem_led, 0))
-    {
-      color = LED_COLOR_RED;
-    }
-    else
-    {
-      color = LED_COLOR_NONE;
-    }
-
-    switch (color)
-    {
-      case LED_COLOR_NONE:
-        led_set_colors(false, false, false);
-        break;
-      case LED_COLOR_RED:
-        LOGGER_INFO("led red");
-        led_set_colors(true, false, false);
-        break;
-      case LED_COLOR_GREEN:
-        LOGGER_INFO("led green");
-        led_set_colors(false, true, false);
-        break;
-      case LED_COLOR_BLUE:
-        LOGGER_INFO("led blue");
-        led_set_colors(false, false, true);
-        break;
-      case LED_COLOR_WHITE:
-        LOGGER_INFO("led white");
-        led_set_colors(true, true, true);
-        break;
-      default:
-        break;
-    }
-
-    vTaskDelay((TickType_t)(TASK_PERIOD_MS_ / portTICK_PERIOD_MS));
+    case LED_COLOR_NONE:
+      led_set_colors(false, false, false);
+      break;
+    case LED_COLOR_RED:
+      LOGGER_INFO("led red");
+      led_set_colors(true, false, false);
+      break;
+    case LED_COLOR_GREEN:
+      LOGGER_INFO("led green");
+      led_set_colors(false, true, false);
+      break;
+    case LED_COLOR_BLUE:
+      LOGGER_INFO("led blue");
+      led_set_colors(false, false, true);
+      break;
+    case LED_COLOR_WHITE:
+      LOGGER_INFO("led white");
+      led_set_colors(true, true, true);
+      break;
+    default:
+      break;
   }
+  vTaskDelay((TickType_t)(TASK_PERIOD_MS_ / portTICK_PERIOD_MS));
 }
 
 /********************** end of file ******************************************/

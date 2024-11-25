@@ -105,14 +105,15 @@ static button_type_t button_process_state_(bool value)
 
 void task_button(void* argument)
 {
-  active_object_t *ui_ao = (active_object_t*)argument;
+  all_obj_t *all_obj = (all_obj_t*)argument;
+  active_object_t *ui_ao = (active_object_t*)all_obj->ui;
   button_init_();
   button_event_t event;
   while(true)
   {
     GPIO_PinState button_state;
     button_state = HAL_GPIO_ReadPin(BUTTON_PORT, BUTTON_PIN);
-
+    event.led_obj = all_obj->led;
     event.type = button_process_state_(button_state);
     if (event.type != BUTTON_TYPE_NONE)
       active_object_send_event(ui_ao, &event);

@@ -45,13 +45,23 @@ extern "C" {
 /********************** macros ***********************************************/
 
 /********************** typedef **********************************************/
-
+typedef enum
+{
+  LED_COLOR_NONE,
+  LED_COLOR_RED,
+  LED_COLOR_GREEN,
+  LED_COLOR_BLUE,
+  LED_COLOR_WHITE,
+  LED_COLOR__N,
+} led_color_t;
 /********************** external data declaration ****************************/
 
 /********************** external functions declaration ***********************/
 
 void task_led(void* argument);
-
+void init_led_active_object(active_object_t *led_obj,
+                            void (*callback)(event_data_t),
+                            uint8_t priority);
 /********************** End of CPP guard *************************************/
 #ifdef __cplusplus
 }
