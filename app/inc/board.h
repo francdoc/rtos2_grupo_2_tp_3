@@ -134,8 +134,8 @@ extern "C" {
 
 #define LED_RED_PIN     LED_C_PIN
 #define LED_RED_PORT    LED_C_PORT
-#define LED_GREEN_PIN   LED_A_PIN
-#define LED_GREEN_PORT  LED_A_PORT
+#define LED_YELLOW_PIN   LED_A_PIN
+#define LED_YELLOW_PORT  LED_A_PORT
 #define LED_BLUE_PIN    LED_B_PIN
 #define LED_BLUE_PORT   LED_B_PORT
 

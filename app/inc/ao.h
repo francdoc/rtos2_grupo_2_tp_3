@@ -1,42 +1,65 @@
-/*
-* ao.h
-* author: José Luis Krüger
-*/
+#ifndef INC_AO_H_
+#define INC_AO_H_
 
-#ifndef ACTIVE_OBJECT_H
-#define ACTIVE_OBJECT_H
-
-#include "FreeRTOS.h"
-#include "task.h"
-#include "queue.h"
+#include "app.h"
 #include "queue_p.h"
 
-typedef void* event_data_t;
-typedef void (*event_callback_t)(event_data_t event);
+#include <stdbool.h>
 
-typedef enum {
-    FREE_RTOS_QUEUE,
-    PRIORITIZED_QUEUE
-} queue_type_t;
+#define MAX_SIZE 10
+
+typedef void* ao_event_t;
+typedef void* pao_event_t;
+
+typedef void (*ao_process_event_t)(ao_event_t* ao_event);
+typedef void (*pao_process_event_t)(pao_event_t* pao_event);
+
+typedef void (*ao_msg_callback_t)(ao_event_t* ao_event);
+
 typedef struct {
-    void* event_queue;
-    event_callback_t process_event;
-    uint8_t event_size;
-    uint8_t obj_id;
-} active_object_t;
+	ao_msg_callback_t ao_msg_callback;
+	ao_event_t ao_event;
+} ao_msg_t;
 
-void active_object_init(active_object_t *obj,
-                        event_callback_t process_event,
-                        size_t queue_size,
-                        int task_priority,
-                        const char* task_name, queue_type_t opt_queue);
+typedef struct {
+	uint8_t ao_event_size;
+	ao_process_event_t ao_process_event;
+	QueueHandle_t event_queue_h;
+	uint8_t ao_id;
+ } ao_t;
 
-void active_object_send_event(active_object_t *obj, event_data_t event);
+typedef struct {
+	queue_p_t* pevent_queue_h;
+	pao_process_event_t pao_process_event;
+	uint8_t pao_event_size;
+	uint8_t pao_id;
+} pao_t;
 
-bool_t active_object_send_priority_event(active_object_t *obj, int data, int priority);
+typedef struct {
+	ao_t *ui;
+	pao_t *leds;
+} system_t;
 
-void active_object_task(void *pv_parameters);
+void ao_task(void* parameters);
 
-void active_object_task_queue_priorized(void *pv_parameters);
+void pao_task(void* parameters);
 
-#endif // ACTIVE_OBJECT_H
+void init_ao(ao_t* ao,
+		ao_process_event_t ao_process_event,
+		uint8_t ao_task_priority,
+		const char* task_name);
+
+void init_pao(pao_t* pao,
+		pao_process_event_t pao_process_event,
+		uint8_t pao_task_priority,
+		const char* task_name);
+
+bool_t ao_send(ao_t* ao,
+		ao_msg_callback_t ao_msg_callback,
+		ao_event_t ao_event);
+
+bool_t pao_send(pao_t* pao,
+		int data,
+		int priority);
+
+#endif /* INC_AO_H_ */

@@ -1,15 +1,7 @@
-/**
- * queue.c
- * 
- * 
- */
 #include "queue_p.h"
 
 #define QUEUE_P_LENGTH 10
 
-
-
-// Function to create a new node
 static node_t* new_node(int d, int p)
 {
     node_t* temp = (node_t*)pvPortMalloc(sizeof(node_t));
@@ -20,11 +12,10 @@ static node_t* new_node(int d, int p)
     return temp;
 }
 
-// Return the value at head
 int queue_peek(queue_p_t* queue)
 {
     node_t *node = (node_t*)queue->head;
-    return node->data; 
+    return node->data;
 }
 
 void queue_create(queue_p_t **queue)
@@ -43,8 +34,7 @@ void queue_create(queue_p_t **queue)
 void queue_destroy(queue_p_t **queue)
 {
     if(queue && *queue) {
-        // Protects shared resource (mutex)
-        xSemaphoreTake((*queue)->queue_mutex,portMAX_DELAY);
+        xSemaphoreTake((*queue)->queue_mutex, portMAX_DELAY);
         {
             node_t *next = (*queue)->head->next;
             node_t *current = (*queue)->head;
@@ -57,21 +47,19 @@ void queue_destroy(queue_p_t **queue)
             }
         }
         xSemaphoreGive((*queue)->queue_mutex);
-        // mutex destroy
         vSemaphoreDelete((*queue)->queue_mutex);
         vPortFree(*queue);
         *queue = NULL;
     }
 }
 
-// Removes the element with the
-// highest priority form the list
+// Removes the element with the highest priority form the list
 bool_t queue_pop(queue_p_t* queue, int* data)
 {
     if(!queue || !data) return false;
     bool_t ret = false;
 
-    xSemaphoreTake(queue->queue_mutex,portMAX_DELAY);
+    xSemaphoreTake(queue->queue_mutex, portMAX_DELAY);
     {
         if(!queue_is_empty(queue)) {
             *data = queue->head->data;
@@ -87,11 +75,10 @@ bool_t queue_pop(queue_p_t* queue, int* data)
     return ret;
 }
 
-// Function to push according to priority
 bool_t queue_push(queue_p_t* queue, int d, int p)
 {
     bool_t ret = false;
-    xSemaphoreTake(queue->queue_mutex,portMAX_DELAY);
+    xSemaphoreTake(queue->queue_mutex, portMAX_DELAY);
     {
         if (queue->current_length < QUEUE_P_LENGTH)
         {
@@ -104,8 +91,7 @@ bool_t queue_push(queue_p_t* queue, int d, int p)
             if (queue_is_empty(queue)) {
                 queue->head = temp;
             }
-            // Special Case: The head of list has
-            // lesser priority than new node
+            // Special Case: The head of list has lesser priority than new node
             else if ((queue->head)->priority < p) {
 
                 // Insert New node_t before head
@@ -128,12 +114,13 @@ bool_t queue_push(queue_p_t* queue, int d, int p)
             }
             ret = true;
         }
-        
+
     }
     xSemaphoreGive(queue->queue_mutex);
 
     return ret;
 }
 
-// Function to check is list is empty
-int queue_is_empty(queue_p_t* queue) { return (queue->head) == NULL; }
+int queue_is_empty(queue_p_t* queue) {
+	return (queue->head) == NULL;
+}

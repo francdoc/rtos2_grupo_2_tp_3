@@ -1,8 +1,3 @@
-/**
- * queue_p.h
- * 
- */
-
 #ifndef QUEUE_P_H
 #define QUEUE_P_H
 
@@ -10,17 +5,14 @@
 #include <stdbool.h>
 #include "FreeRTOS.h"
 #include "cmsis_os.h"
+#include "app.h"
 
 typedef bool bool_t;
 typedef struct node {
     int data;
-
-    // Lower values indicate
-    // higher priority
+    // Lower values indicate higher priority
     int priority;
-
     struct node* next;
-
 } node_t;
 
 typedef struct queue_p
